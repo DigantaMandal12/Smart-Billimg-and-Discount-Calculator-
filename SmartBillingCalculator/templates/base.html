@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Academic Smart Billing and Discount Calculator — Python &amp; Flask Case Study (PCC-CS393)">
+  <title>{% block title %}Smart Billing &amp; Discount Calculator{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <main class="shell" id="main-content">
+    <header class="hero">
+      <div class="eyebrow">PYTHON CASE STUDY · PCC-CS393</div>
+      <h1>Smart Billing <span>&amp; Discount Calculator</span></h1>
+      <p>Enter product details, automatically apply demonstration discount slabs and sample tax, and generate a clean, print-ready itemized bill.</p>
+    </header>
+
+    {% block content %}{% endblock %}
+
+    <footer class="site-footer">
+      <p>Smart Billing &amp; Discount Calculator · Academic Case Study built with Python &amp; Flask</p>
+    </footer>
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</body>
+</html>

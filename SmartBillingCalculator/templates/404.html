@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found (404) · Smart Billing Calculator{% endblock %}
+
+{% block content %}
+  <section class="panel error-page-panel" aria-labelledby="error-404-heading">
+    <div class="eyebrow">HTTP 404 ERROR</div>
+    <h2 id="error-404-heading">Page Not Found</h2>
+    <p>The page you requested does not exist in the Smart Billing &amp; Discount Calculator application.</p>
+    <div class="form-actions">
+      <a href="{{ url_for('index') }}" class="button button-primary">Return to Billing Calculator</a>
+    </div>
+  </section>
+{% endblock %}

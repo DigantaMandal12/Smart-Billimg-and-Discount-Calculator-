@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Billing &amp; Discount Calculator{% endblock %}
+
+{% block content %}
+  {% if error %}
+    <div class="alert" role="alert" aria-live="assertive">
+      <strong>Validation Error:</strong> {{ error }}
+    </div>
+  {% endif %}
+
+  <section class="panel form-panel" aria-labelledby="step1-heading">
+    <div class="section-heading">
+      <div>
+        <div class="eyebrow">STEP 1</div>
+        <h2 id="step1-heading">Product Details</h2>
+      </div>
+      <span class="pill" id="row-counter-pill">Up to 50 items</span>
+    </div>
+
+    <form method="post" action="{{ url_for('index') }}" id="billing-form" novalidate>
+      <div class="column-labels" aria-hidden="true">
+        <span>Product Name</span>
+        <span>Unit Price (₹)</span>
+        <span>Quantity</span>
+        <span class="sr-only">Actions</span>
+      </div>
+
+      <div id="items" data-max-items="50">
+        {% for item in form_items %}
+        <div class="item-row">
+          <div class="field-group">
+            <label class="mobile-label" for="item-name-{{ loop.index }}">Product Name</label>
+            <input id="item-name-{{ loop.index }}"
+                   name="item_name[]"
+                   type="text"
+                   maxlength="80"
+                   placeholder="e.g. Lab Notebook"
+                   aria-label="Product name"
+                   value="{{ item['name'] }}"
+                   required>
+          </div>
+          <div class="field-group">
+            <label class="mobile-label" for="item-price-{{ loop.index }}">Unit Price (₹)</label>
+            <input id="item-price-{{ loop.index }}"
+                   name="price[]"
+                   type="number"
+                   min="0"
+                   max="100000000"
+                   step="0.01"
+                   placeholder="0.00"
+                   aria-label="Price in rupees"
+                   value="{{ item['price'] }}"
+                   required>
+          </div>
+          <div class="field-group">
+            <label class="mobile-label" for="item-qty-{{ loop.index }}">Quantity</label>
+            <input id="item-qty-{{ loop.index }}"
+                   name="quantity[]"
+                   type="number"
+                   min="1"
+                   max="100000"
+                   step="1"
+                   aria-label="Quantity"
+                   value="{{ item['quantity'] or '1' }}"
+                   required>
+          </div>
+          <button type="button"
+                  class="remove-button"
+                  aria-label="Remove product row"
+                  title="Remove row">×</button>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="form-actions">
+        <div class="form-actions-left">
+          <button type="button" class="button button-light" id="add-item-btn">＋ Add Product</button>
+          <a href="{{ url_for('index') }}" class="button button-outline" id="reset-bill-btn">Reset Form</a>
+        </div>
+        <button type="submit" class="button button-primary">Calculate Bill <span aria-hidden="true">→</span></button>
+      </div>
+    </form>
+  </section>
+
+  {% if bill %}
+  <section class="panel result-panel" aria-labelledby="step2-heading" aria-live="polite">
+    <div class="print-header" aria-hidden="true">
+      <h2>Smart Billing &amp; Discount Calculator</h2>
+      <p>Academic Demonstration Invoice · Subject Code: PCC-CS393</p>
+    </div>
+
+    <div class="section-heading">
+      <div>
+        <div class="eyebrow">STEP 2</div>
+        <h2 id="step2-heading">Itemized Bill Summary</h2>
+      </div>
+      <span class="pill success">Calculated ({{ bill["item_count"] }} {{ "item" if bill["item_count"] == 1 else "items" }}, {{ bill["total_units"] }} {{ "unit" if bill["total_units"] == 1 else "units" }})</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Product</th>
+            <th scope="col" class="numeric">Unit Price</th>
+            <th scope="col" class="numeric">Qty</th>
+            <th scope="col" class="numeric">Line Total</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for item in bill["items"] %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ item["name"] }}</td>
+            <td class="numeric">₹{{ "%.2f"|format(item["price"]) }}</td>
+            <td class="numeric">{{ item["quantity"] }}</td>
+            <td class="numeric">₹{{ "%.2f"|format(item["line_total"]) }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="summary">
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <strong>₹{{ "%.2f"|format(bill["subtotal"]) }}</strong>
+      </div>
+      <div class="summary-row">
+        <span>Discount ({{ (bill["discount_rate"] * 100)|int }}%)</span>
+        <strong class="discount">− ₹{{ "%.2f"|format(bill["discount"]) }}</strong>
+      </div>
+      <div class="summary-row">
+        <span>Amount After Discount</span>
+        <strong>₹{{ "%.2f"|format(bill["taxable_amount"]) }}</strong>
+      </div>
+      <div class="summary-row">
+        <span>Sample Tax ({{ tax_rate_percent }}% after discount)</span>
+        <strong>₹{{ "%.2f"|format(bill["tax"]) }}</strong>
+      </div>
+      <div class="summary-row total-row">
+        <span>Final Payable Amount</span>
+        <strong>₹{{ "%.2f"|format(bill["total"]) }}</strong>
+      </div>
+      <p class="notice">
+        <strong>Note (Academic Demonstration Only):</strong> The discount slabs (0% below ₹2,500; 5% for ₹2,500–₹4,999.99; 10% for ₹5,000+) and the {{ tax_rate_percent }}% sample tax rate are configurable demonstration values, not official tax guidance.
+      </p>
+      <button class="button button-light print-button" type="button" id="print-bill-btn">Print Itemized Bill</button>
+    </div>
+  </section>
+  {% else %}
+  <section class="panel empty-state-panel" aria-label="Bill preview placeholder">
+    <div class="empty-state">
+      <div class="empty-icon" aria-hidden="true">🧾</div>
+      <h3>No Bill Calculated Yet</h3>
+      <p>Enter one or more products above with their unit price and whole-number quantity, then click <strong>Calculate Bill</strong> to view the itemized breakdown, discount slab, sample tax, and final payable amount.</p>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="rules" aria-labelledby="rules-heading">
+    <h2 id="rules-heading">Demonstration Discount &amp; Tax Rules</h2>
+    <div class="rule-grid">
+      <div class="rule-card">
+        <span class="rule-badge">Slab 1</span>
+        <strong>0% Discount</strong>
+        <span>Subtotal below ₹2,500.00</span>
+      </div>
+      <div class="rule-card">
+        <span class="rule-badge">Slab 2</span>
+        <strong>5% Discount</strong>
+        <span>Subtotal from ₹2,500.00 to ₹4,999.99</span>
+      </div>
+      <div class="rule-card">
+        <span class="rule-badge">Slab 3</span>
+        <strong>10% Discount</strong>
+        <span>Subtotal of ₹5,000.00 or more</span>
+      </div>
+    </div>
+    <p class="rules-footnote">
+      <strong>Sample Tax Rule:</strong> {{ tax_rate_percent }}% calculated on the discounted subtotal (Amount After Discount). All monetary figures use Python <code>Decimal</code> arithmetic rounded to 2 decimal places (<code>ROUND_HALF_UP</code>).
+    </p>
+  </section>
+{% endblock %}
